@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VueShop</title>
+    <script src="./dist/vue.global.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+        body {
+            height: 100vh;
+            background-color: #222;
+            overflow: hidden;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+            list-style-type: none;
+        }
+
+        .products {
+            display: flex;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            height: 75%;
+        }
+
+        .product-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 75%;
+            height: auto;
+            padding: 10px;
+            align-items: start;
+            justify-content: start;
+        }
+
+        .products .product {
+            position: relative;
+            width: auto;
+            height: auto;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background-color: #ccc;
+        }
+
+        .product .product-actions {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .product-actions button {
+            border: none;
+            padding: 5px 10px;
+            width: 50%;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .product-actions button:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .product-actions button.up-btn {
+            background-color: rgb(2, 180, 2);
+        }
+
+        .product-actions button.down-btn {
+            background-color: darkred;
+        }
+
+        .basket-container {
+            position: relative;
+            width: auto;
+            height: auto;
+            background-color: #fff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 25px;
+        }
+
+        .basket-container .basket-products {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            margin: 10px;
+            border-radius: 25px;
+        }
+
+        .basket-products .basket-product {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 5px;
+        }
+
+        .basket-product:not(:last-child) {
+            border-bottom: 1px solid #ccc;
+        }
+
+        .basket-container .basket-btn {
+            border: none;
+            padding: 5px 10px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 250ms;
+            width: 50%;
+        }
+
+        .basket-container .basket-btn.buy-btn {
+            background-color: #07b307;
+        }
+
+        .basket-container .basket-btn.reset-btn {
+            background-color: rgb(193, 4, 4);
+            color: white;
+        }
+
+        .basket-container .basket-btn:hover {
+            transform: translateY(5px);
+        }
+
+        .basket-btns {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1 style="text-align: center; margin: 15px; color: white;">Vue Shop</h1>
+        <div class="products">
+            <div class="product-container">
+                <div v-for="product in products" class="product">
+                    <h3 style="text-align: center;">{{product.name}}(<span
+                            style="color: #04b004;">{{product.price}}</span>₺)</h3>
+                    <div class="product-actions">
+                        <button :disabled="product.count <= 0" @click="decreaseProduct(product)"
+                            class="down-btn">-</button>
+                        <h3 class="product-count">{{product.count}}</h3>
+                        <button @click="increaseProduct(product)" class="up-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="basket-container">
+                <h3>Your Basket</h3>
+                <hr>
+                <ul class="basket-products">
+                    <li v-for="product in basketProducts.filter(i => i.count > 0)" class="basket-product">
+                        <h3>{{product.name}} <span v-if="product.count > 0">({{product.count}}X)</span></h3>
+                        <h3 style="color: #008000;">{{product.price * product.count}}₺</h3>
+                    </li>
+                    <li v-if="basketProducts.filter(i => i.count > 0).length > 0" class="basket-product payment">
+                        <h3>{{basketProducts.map(b => b.count).reduce((a, b) => a + b, 0)}} Product</h3>
+                        <h3 style="color: #008000;">
+                            {{basketProducts.map(p => p.count * p.price).reduce((a, b) => a + b, 0)}}₺
+                        </h3>
+                    </li>
+                    <li v-else class="basket-product">Basket is empty</li>
+                </ul>
+                <div class="basket-btns">
+                    <button v-if="basketProducts.filter(i => i.count > 0).length > 0"
+                        class="basket-btn buy-btn">Buy</button>
+                    <button @click="resetBasket" v-if="basketProducts.filter(i => i.count > 0).length > 0"
+                        class="basket-btn reset-btn">Reset all</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Vue.createApp({
+            data() {
+                return {
+                    products: [{
+                        id: 1,
+                        name: "İphone 11",
+                        price: 2000,
+                        count: 0
+                    }, {
+                        id: 2,
+                        name: "Macbook PRO",
+                        price: 3750,
+                        count: 0
+                    }, {
+                        id: 3,
+                        name: "Laptop",
+                        price: 2000,
+                        count: 0
+                    }, {
+                        id: 4,
+                        name: "İphone 12",
+                        price: 4000,
+                        count: 0
+                    }],
+                    basketProducts: []
+                }
+            },
+            methods: {
+                increaseProduct(product) { //Buy
+                    product.count++;
+                    const findProduct = this.basketProducts.find(p => p.id === product.id);
+                    if (!findProduct)
+                        this.basketProducts.push({ ...product, count: 1 });
+                    else findProduct.count++;
+                },
+                decreaseProduct(product) { //Decrease
+                    const findProduct = this.basketProducts.find(p => p.id === product.id);
+                    if (findProduct.count <= 0) return;
+                    product.count--;
+                    if (findProduct.count - 1 === 0)
+                        this.basketProducts = this.basketProducts.filter(f => f.id !== findProduct.id);
+                    else findProduct.count--;
+                },
+                resetBasket() {
+                    this.products.forEach(product => product.count = 0);
+                    this.basketProducts = [];
+                }
+            }
+        }).mount("#app");
+    </script>
+</body>
+
+</html>
